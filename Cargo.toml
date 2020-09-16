@@ -1,0 +1,10 @@
+[package]
+name = "ili9163c_driver"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+
+ranged_integers = { git = "https://github.com/disiamylborane/ranged_integers" }
+bool-enum = {git = "https://github.com/disiamylborane/bool-enum"}
+
