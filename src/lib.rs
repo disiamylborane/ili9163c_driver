@@ -247,7 +247,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
         self.send_read_cmd(Command::ReadID4);
         let driver_ic_id = self.data_read();
         let driver_ic_part_number = self.data_read();
-        let driver_ic_version = unsafe {Ranged::__unsafe__((self.data_read() % 16) as u8)} ;
+        let driver_ic_version : Ranged<0, 15> = self.data_read() % r![16]/*unsafe{Ranged::<16, 16>::__unsafe_new(16)}*/ ;
         DriverIDInfo{driver_ic_id, driver_ic_part_number, driver_ic_version}
     }
 
