@@ -45,7 +45,7 @@ impl crate::Ili9163CInterface for MyLcd {
     // Initialize the driver
     lcd.sleep_off_nonsynced();  // Exit sleep (sleep mode is activated after reset)
     delay_ms(5);
-    lcd.set_fps_normal(ranged!([0 63] 40), ranged!([4 35] 20));  // Set refresh rate parameters
+    lcd.set_fps_normal(r!([0 63] 40), r!([4 35] 20));  // Set refresh rate parameters
     lcd.set_lcd_inversion(LCDInversion::Line, LCDInversion::Line, LCDInversion::Line);  // Set polarity inversion type
     lcd.set_mem_access(MemAccess(  // Setup access parameters
         RowAddressOrder::RightToLeft,
@@ -84,8 +84,7 @@ impl crate::Ili9163CInterface for MyLcd {
 
 #![allow(incomplete_features)]
 #![feature(const_generics)]
-
-#![feature(const_fn)]
+#![feature(const_evaluatable_checked)]
 #![feature(const_panic)]
 
 #![feature(doc_cfg)]
