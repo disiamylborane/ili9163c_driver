@@ -84,7 +84,6 @@ impl crate::Ili9163CInterface for MyLcd {
 
 #![allow(incomplete_features)]
 #![feature(const_generics)]
-#![feature(const_evaluatable_checked)]
 #![feature(const_panic)]
 
 #![feature(doc_cfg)]
@@ -247,7 +246,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
         self.send_read_cmd(Command::ReadID4);
         let driver_ic_id = self.data_read();
         let driver_ic_part_number = self.data_read();
-        let driver_ic_version : Ranged<0, 15> = self.data_read() % r![16]/*unsafe{Ranged::<16, 16>::__unsafe_new(16)}*/ ;
+        let driver_ic_version = self.data_read() % r!(16);
         DriverIDInfo{driver_ic_id, driver_ic_part_number, driver_ic_version}
     }
 
@@ -317,7 +316,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
             0b_011 => ControlPixFormat::Bits_12,
             0b_101 => ControlPixFormat::Bits_16,
             0b_110 => ControlPixFormat::Bits_18,
-            _ => Err(())?,
+            _ => return Err(()),
         };
 
         let negative = byte2.bit(5);
@@ -327,7 +326,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
             0b_01 => GammaCurve::GC2,
             0b_10 => GammaCurve::GC3,
             0b_11 => GammaCurve::GC4,
-            _ => Err(())?,
+            _ => return Err(()),
         };
 
         let tearing = 
@@ -601,7 +600,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
     ///     // writer is dropped, "no_operation" command is sent
     /// }
     /// ```
-    pub fn initiate_write<'a>(&'a mut self) -> DisplayWriter<'a, T> {
+    pub fn initiate_write(&mut self) -> DisplayWriter<'_, T> {
         self.send_write_cmd(Command::WriteRAM);
         DisplayWriter(self)
     }
@@ -618,7 +617,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
     ///     // reader is dropped, "no_operation" command is sent
     /// }
     /// ```
-    pub fn initiate_read<'a>(&'a mut self) -> DisplayReader<'a, T> {
+    pub fn initiate_read(&mut self) -> DisplayReader<'_, T> {
         self.send_write_cmd(Command::ReadRAM);
         DisplayReader(self)
     }
@@ -675,21 +674,21 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
     /// If display is 128x160,  `Line=160`
     pub fn set_fps_normal(&mut self, v: Ranged<0,63>, div: Ranged<4,35>) {
         self.send_write_cmd(Command::FrameRateControlNormal);
-        self.data_write(div.u8()-4);
+        self.data_write((div-r!(4)).u8());
         self.data_write(v.u8());
     }
 
     /// Frame rate control for Partial mode (See [set_fps_normal](struct.Ili9163C.html#method.set_fps_normal))
     pub fn set_fps_partial(&mut self, v: Ranged<0,63>, div: Ranged<4,35>) {
         self.send_write_cmd(Command::FrameRateControlPartial);
-        self.data_write(div.u8()-4);
+        self.data_write((div-r!(4)).u8());
         self.data_write(v.u8());
     }
 
     /// Frame rate control for Idle mode
     pub fn set_fps_idle(&mut self, v: Ranged<0,63>, div: Ranged<4,35>) {
         self.send_write_cmd(Command::FrameRateControlIdle);
-        self.data_write(div.u8()-4);
+        self.data_write((div-r!(4)).u8());
         self.data_write(v.u8());
     }
 
