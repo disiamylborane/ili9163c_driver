@@ -45,7 +45,7 @@ impl crate::Ili9163CInterface for MyLcd {
     // Initialize the driver
     lcd.sleep_off_nonsynced();  // Exit sleep (sleep mode is activated after reset)
     delay_ms(5);
-    lcd.set_fps_normal(r!([0 63] 40), r!([4 35] 20));  // Set refresh rate parameters
+    lcd.set_fps_normal(r!([] 40), r!([] 20));  // Set refresh rate parameters
     lcd.set_lcd_inversion(LCDInversion::Line, LCDInversion::Line, LCDInversion::Line);  // Set polarity inversion type
     lcd.set_mem_access(MemAccess(  // Setup access parameters
         RowAddressOrder::RightToLeft,
@@ -83,13 +83,16 @@ impl crate::Ili9163CInterface for MyLcd {
 #![warn(missing_docs)]
 
 #![allow(incomplete_features)]
-#![feature(const_generics)]
+#![feature(generic_const_exprs)]
+#![feature(adt_const_params)]
 #![feature(const_panic)]
 
 #![feature(doc_cfg)]
 
+#![allow(clippy::unusual_byte_groupings)]
+
 extern crate ranged_integers;
-use ranged_integers::*;
+use ranged_integers::{Ranged, r};
 
 extern crate bool_enum;
 use bool_enum::bool_enum;
@@ -141,6 +144,7 @@ pub trait Ili9163CInterfaceCtx {
 
 /// Device: The context-free version of [Ili9163CInterfaceCtx](trait.Ili9163CInterfaceCtx.html)
 #[allow(missing_docs)]
+#[allow(clippy::missing_safety_doc)]
 pub trait Ili9163CInterface
 {
     unsafe fn send_write_cmd(command: u8);
@@ -283,11 +287,13 @@ pub struct DisplayStatus {
     pub tearing: TearingPinMode,
 }
 
+/// Error: the bits read from Ili9163C device are meaningless
+#[derive(Debug)] pub struct DataError;
+
 /// # Display status
 impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
-
     /// Read the complete display status
-    pub fn display_status(&mut self) -> Result<DisplayStatus,()> {
+    pub fn display_status(&mut self) -> Result<DisplayStatus, DataError> {
         self.send_read_cmd(Command::DisplayStatus);
         let byte0 = self.data_read();
         let byte1 = self.data_read();
@@ -302,7 +308,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
             partial: byte1.bit(2),
             sleep: byte1.bit(1)
         };
-        
+
         let mem_access = MemAccess(
             byte0.bit(6).into(),
             byte0.bit(5).into(),
@@ -316,7 +322,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
             0b_011 => ControlPixFormat::Bits_12,
             0b_101 => ControlPixFormat::Bits_16,
             0b_110 => ControlPixFormat::Bits_18,
-            _ => return Err(()),
+            _ => return Err(DataError),
         };
 
         let negative = byte2.bit(5);
@@ -326,7 +332,7 @@ impl<T: Ili9163CInterfaceCtx> Ili9163CCtx<T> {
             0b_01 => GammaCurve::GC2,
             0b_10 => GammaCurve::GC3,
             0b_11 => GammaCurve::GC4,
-            _ => return Err(()),
+            _ => return Err(DataError),
         };
 
         let tearing = 
